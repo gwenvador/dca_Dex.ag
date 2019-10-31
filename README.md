@@ -7,7 +7,8 @@ Based on [DEX.ag API](https://docs.dex.ag/api)
 
 ### Instructions
 * Install node.js
-* Install ethers.js: npm install --save ethers
+* Install ethers.js: 
+> npm install --save ethers
 * Configure the user settings
   * Ethereum Mnemonic Key
   * Tokens to exchange (From, To)
