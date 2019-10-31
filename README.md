@@ -6,13 +6,13 @@ This script uses [Dex.ag](https://dex.ag) an aggregator of DEX (Decentralized Ex
 Based on [DEX.ag API](https://docs.dex.ag/api)
 
 ### Instructions
-*Install node.js
-*Install ethers.js: npm install --save ethers
-*Configure the user settings
-  *Ethereum Mnemonic Key
-  *Tokens to exchange (From, To)
-  *Amount
-  *Dex to use (best is for best rate). see https://docs.dex.ag/api for list of DEX
-  *Infura API key
-*To setup DCA use crontab. Example of launching script everyday at midnight:
+* Install node.js
+* Install ethers.js: npm install --save ethers
+* Configure the user settings
+  * Ethereum Mnemonic Key
+  * Tokens to exchange (From, To)
+  * Amount
+  * Dex to use (best is for best rate). see https://docs.dex.ag/api for list of DEX
+  * Infura API key
+* To setup DCA use crontab. Example of launching script everyday at midnight:
   0 0 * * * /usr/bin/node $DIRECTORY/dex.js >> $DIRECTORY/dex.ag.log 2>&1
