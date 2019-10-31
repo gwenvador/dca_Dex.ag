@@ -15,4 +15,4 @@ Based on [DEX.ag API](https://docs.dex.ag/api)
   * Dex to use (best is for best rate). see https://docs.dex.ag/api for list of DEX
   * Infura API key
 * To setup DCA use crontab. Example of launching script everyday at midnight:
-  0 0 * * * /usr/bin/node $DIRECTORY/dex.js >> $DIRECTORY/dex.ag.log 2>&1
+ > 0 0 * * * /usr/bin/node $DIRECTORY/dex.js >> $DIRECTORY/dex.ag.log 2>&1
