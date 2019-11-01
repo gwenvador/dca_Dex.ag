@@ -5,6 +5,8 @@ const request = require('request-promise');
 
 ///////////User settings//////////////
 const mnemonic = 'your mnemonic';
+let ethersWallet = new ethers.Wallet.fromMnemonic(mnemonic);
+const infuraProvider = new ethers.providers.InfuraProvider('homestead');
 ethersWallet = ethersWallet.connect(infuraProvider, 'infura api key');
 
 const fromToken = "DAI"
@@ -12,16 +14,13 @@ const toToken = "ETH"
 const fromAmount = 10
 const dex = "best"
 
+const gasLimit = 500000;
+
 //Telegram notifications parameters
 token = "token"
 chat_id = "chat_id"
 
 /////////////////////////////////////
-
-const infuraProvider = new ethers.providers.InfuraProvider('homestead');
-let ethersWallet = new ethers.Wallet.fromMnemonic(mnemonic);
-
-const gasLimit = 500000;
 
 const ERC20_abi = [
   {
