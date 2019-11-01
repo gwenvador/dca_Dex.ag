@@ -3,7 +3,7 @@ const ethers = require('ethers');
 const { Contract } = require('ethers');
 const request = require('request-promise');
 
-/////////User settings//////////
+///////////User settings//////////////
 const mnemonic = 'your mnemonic';
 ethersWallet = ethersWallet.connect(infuraProvider, 'infura api key');
 
@@ -11,6 +11,11 @@ const fromToken = "DAI"
 const toToken = "ETH"
 const fromAmount = 10
 const dex = "best"
+
+//Telegram notifications parameters
+token = "token"
+chat_id = "chat_id"
+
 /////////////////////////////////////
 
 const infuraProvider = new ethers.providers.InfuraProvider('homestead');
@@ -64,6 +69,13 @@ const ERC20_abi = [
 
 start()
 
+function logging(message) {
+  //Console notifications
+  console.log(message)
+  //Telegram notifications
+  request("https://api.telegram.org/bot"+token+"/sendMessage?chat_id="+chat_id+"&text=----DEX.ag----"+message)
+}
+
 async function getBalance(tokenAddress) {
   let contract = new Contract(tokenAddress, ERC20_abi, infuraProvider);
   balance = await contract.balanceOf(ethersWallet.address);
@@ -81,7 +93,7 @@ async function getDexAgTrade() {
       let trade = await request('https://api.dex.ag/trade?from='+ fromToken + '&to=' + toToken + '&fromAmount='+fromAmount+'&dex='+dex);
       return JSON.parse(trade);
     } catch (err) {
-      console.log('Error request trade DEX.AG');
+      logging('Error reaching DEX.AG');
     }
 }
 
@@ -103,7 +115,11 @@ async function approveToken(token, spender, amount) {
 
     // construct approval data from function hash and parameters
     let inputData = `${funcHash}${bytes}`;
+
     let nonce = await infuraProvider.getTransactionCount(ethersWallet.address);
+
+    // You will want to get the real gas price from https://ethgasstation.info/json/ethgasAPI.json
+    // let gasPrice = 4000000000;
     let gasPrice = await infuraProvider.getGasPrice();
 
     let transaction = {
@@ -114,11 +130,17 @@ async function approveToken(token, spender, amount) {
         data: inputData
     }
 
-    let tx = await ethersWallet.sendTransaction(transaction);
+    // transaction.gasLimit = await infuraProvider.estimateGas(transaction);
+    logging(" ------ Transaction approve token" , transaction)
+
+    // let tx = await ethersWallet.sendTransaction(transaction);
+    // logging(" ------ Transaction approve token " , tx);
 }
 
 async function sendTrade(trade) {
     let nonce = await infuraProvider.getTransactionCount(ethersWallet.address);
+    // You will want to get the real gas price from https://ethgasstation.info/json/ethgasAPI.json
+    // let gasPrice = 4000000000;
     let gasPrice = await infuraProvider.getGasPrice();
     if (trade.metadata.gasPrice) {
         // Use the contract gas price if specified (Bancor)
@@ -130,35 +152,42 @@ async function sendTrade(trade) {
     transaction.gasPrice = Number(gasPrice);
     transaction.gasLimit = gasLimit; // You will want to use estimateGas instead for real apps
     transaction.value = Number(transaction.value);
+    // transaction.gasLimit = await infuraProvider.estimateGas(transaction);
+
+    logging(" ------ Transaction sent " , transaction);
 
     let tx = await ethersWallet.sendTransaction(transaction);
+    logging(" ------ Transaction exchange " , tx);
 }
 
 async function start() {
   let trade = await getDexAgTrade();
   if (!trade) {
-    console.log("Request error from dex.ag")
+    logging("Request error from dex.ag")
   }
   else {
-    console.log(" ------ Dex.ag request " , trade)
-    // Check if enough tokens for the trade
+    logging(" ------ Dex.ag request " , trade)
+    // Check if enough tokens for the trade and return from dex.ag correct
     let balance = await getBalance(trade.metadata.input.address)
+    // logging("Token balance:",balance)
 
     if (parseInt(balance) >= parseInt(trade.metadata.input.amount)) {
       let allowance = await getAllowance(trade.metadata.input.address, trade.metadata.input.spender)
+      // logging("allowance:", allowance)
+
       if (parseInt(allowance) >= parseInt(trade.metadata.input.amount)) {
         await sendTrade(trade);
-        console.log("Trade executed")
+        logging("Trade executed")
       } else {
         //Allow transfer of token
-        console.log("Approval of Token transfer")
+        logging("Approval of Token transfer")
         await approveToken(trade.metadata.input.address, trade.metadata.input.spender, trade.metadata.input.amount);
         await sendTrade(trade);
-        console.log("Trade executed")
+        logging("Trade executed")
       }
     }
     else {
-      console.log('Token balance to small:', parseInt(balance))
+      logging('Token balance to small:', parseInt(balance))
     }
   }
 }
