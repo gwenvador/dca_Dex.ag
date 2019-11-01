@@ -73,7 +73,7 @@ function logging(message) {
   //Console notifications
   console.log(message)
   //Telegram notifications
-  request("https://api.telegram.org/bot"+token+"/sendMessage?chat_id="+chat_id+"&text=----DEX.ag----"+message)
+  request("https://api.telegram.org/bot"+token+"/sendMessage?chat_id="+chat_id+"&text="+message)
 }
 
 async function getBalance(tokenAddress) {
@@ -89,52 +89,51 @@ async function getAllowance(tokenAddress,spenderAddress) {
 }
 
 async function getDexAgTrade() {
-    try {
-      let trade = await request('https://api.dex.ag/trade?from='+ fromToken + '&to=' + toToken + '&fromAmount='+fromAmount+'&dex='+dex);
-      return JSON.parse(trade);
-    } catch (err) {
-      logging('Error reaching DEX.AG');
-    }
+  try {
+    let trade = await request('https://api.dex.ag/trade?from='+ fromToken + '&to=' + toToken + '&fromAmount='+fromAmount+'&dex='+dex);
+    return JSON.parse(trade);
+  } catch (err) {
+    logging('Error reaching DEX.AG');
+  }
 }
 
 async function approveToken(token, spender, amount) {
-    // First 4 bytes of the hash of "fee()" for the sighash selector
-    let funcHash = ethers.utils.hexDataSlice(ethers.utils.id('approve(address,uint256)'), 0, 4);
+  // First 4 bytes of the hash of "fee()" for the sighash selector
+  let funcHash = ethers.utils.hexDataSlice(ethers.utils.id('approve(address,uint256)'), 0, 4);
 
-    let abi = new ethers.utils.AbiCoder();
-    let inputs = [{
-        name: 'spender',
-        type: 'address'
-      }, {
-        name: 'amount',
-        type: 'uint256'
-      }];
+  let abi = new ethers.utils.AbiCoder();
+  let inputs = [{
+      name: 'spender',
+      type: 'address'
+    }, {
+      name: 'amount',
+      type: 'uint256'
+    }];
 
-    let params = [spender, amount];
-    let bytes = abi.encode(inputs, params).substr(2);
+  let params = [spender, amount];
+  let bytes = abi.encode(inputs, params).substr(2);
 
-    // construct approval data from function hash and parameters
-    let inputData = `${funcHash}${bytes}`;
+  // construct approval data from function hash and parameters
+  let inputData = `${funcHash}${bytes}`;
 
-    let nonce = await infuraProvider.getTransactionCount(ethersWallet.address);
+  let nonce = await infuraProvider.getTransactionCount(ethersWallet.address);
 
-    // You will want to get the real gas price from https://ethgasstation.info/json/ethgasAPI.json
-    // let gasPrice = 4000000000;
-    let gasPrice = await infuraProvider.getGasPrice();
+  // You will want to get the real gas price from https://ethgasstation.info/json/ethgasAPI.json
+  // let gasPrice = 4000000000;
+  let gasPrice = await infuraProvider.getGasPrice();
 
-    let transaction = {
-        to: token,
-        nonce: nonce,
-        gasLimit: gasLimit, // You will want to use estimateGas instead for real apps
-        gasPrice: gasPrice,
-        data: inputData
-    }
+  let transaction = {
+      to: token,
+      nonce: nonce,
+      gasLimit: gasLimit, // You will want to use estimateGas instead for real apps
+      gasPrice: gasPrice,
+      data: inputData
+  }
 
-    // transaction.gasLimit = await infuraProvider.estimateGas(transaction);
-    logging(" ------ Transaction approve token" , transaction)
+  // transaction.gasLimit = await infuraProvider.estimateGas(transaction);
 
-    // let tx = await ethersWallet.sendTransaction(transaction);
-    // logging(" ------ Transaction approve token " , tx);
+  let tx = await ethersWallet.sendTransaction(transaction);
+  logging(" ------ Transaction approve token " + tx);
 }
 
 async function sendTrade(trade) {
@@ -154,10 +153,12 @@ async function sendTrade(trade) {
     transaction.value = Number(transaction.value);
     // transaction.gasLimit = await infuraProvider.estimateGas(transaction);
 
-    logging(" ------ Transaction sent " , transaction);
+    logging(" ------ Transaction sent. You should receive "
+            + trade.metadata.query.fromAmount*trade.metadata.source.price
+            + trade.metadata.query.to + " via " + trade.metadata.source.dex);
 
     let tx = await ethersWallet.sendTransaction(transaction);
-    logging(" ------ Transaction exchange " , tx);
+    logging(" ------ Check etherscan: https://etherscan.io/tx/" + tx.hash );
 }
 
 async function start() {
@@ -166,28 +167,23 @@ async function start() {
     logging("Request error from dex.ag")
   }
   else {
-    logging(" ------ Dex.ag request " , trade)
+    logging("Dex.ag request " + JSON.stringify(trade.metadata))
     // Check if enough tokens for the trade and return from dex.ag correct
     let balance = await getBalance(trade.metadata.input.address)
-    // logging("Token balance:",balance)
-
+    //If balance is enough
     if (parseInt(balance) >= parseInt(trade.metadata.input.amount)) {
       let allowance = await getAllowance(trade.metadata.input.address, trade.metadata.input.spender)
-      // logging("allowance:", allowance)
-
+      //If allowance is enough for transfer
       if (parseInt(allowance) >= parseInt(trade.metadata.input.amount)) {
         await sendTrade(trade);
-        logging("Trade executed")
       } else {
         //Allow transfer of token
-        logging("Approval of Token transfer")
         await approveToken(trade.metadata.input.address, trade.metadata.input.spender, trade.metadata.input.amount);
         await sendTrade(trade);
-        logging("Trade executed")
       }
     }
     else {
-      logging('Token balance to small:', parseInt(balance))
+      logging('Token balance too small:' + balance)
     }
   }
 }
