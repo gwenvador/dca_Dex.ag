@@ -12,7 +12,7 @@ ethersWallet = ethersWallet.connect(infuraProvider, 'infura api key');
 const fromToken = "DAI"
 const toToken = "ETH"
 const fromAmount = 10
-const dex = "best"
+const dex = "best"  //best, uniswap, bancor, oasis, radar, kyber
 
 const gasLimit = 500000;
 
@@ -152,12 +152,18 @@ async function sendTrade(trade) {
     transaction.value = Number(transaction.value);
     // transaction.gasLimit = await infuraProvider.estimateGas(transaction);
 
-    logging(" ------ Transaction sent. You should receive "
+    if (trade.metadata.source) {
+      logging(" ------ Transaction sent. You should receive "
             + trade.metadata.query.fromAmount*trade.metadata.source.price
-            + trade.metadata.query.to + " via " + trade.metadata.source.dex);
+            + trade.metadata.query.to + " via " + trade.metadata.source.dex)
 
-    let tx = await ethersWallet.sendTransaction(transaction);
-    logging(" ------ Check etherscan: https://etherscan.io/tx/" + tx.hash );
+      let tx = await ethersWallet.sendTransaction(transaction)
+      logging(" ------ Check etherscan: https://etherscan.io/tx/" + tx.hash )
+    }
+    else {
+      logging(" ------ Error in DEX.ag request. Missing data for the transaction")
+    }
+
 }
 
 async function start() {
