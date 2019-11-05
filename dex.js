@@ -12,7 +12,7 @@ ethersWallet = ethersWallet.connect(infuraProvider, 'infura api key');
 const fromToken = "DAI"
 const toToken = "ETH"
 const fromAmount = 10
-const dex = "best"  //best, uniswap, bancor, oasis, radar, kyber
+const dex = "best"  //best, uniswap, bancor, oasis, radar-relay, kyber
 
 const gasLimit = 500000;
 
@@ -152,7 +152,7 @@ async function sendTrade(trade) {
     transaction.value = Number(transaction.value);
     // transaction.gasLimit = await infuraProvider.estimateGas(transaction);
 
-    if (trade.metadata.source) {
+    if (trade.metadata.source && trade.metadata.query) {
       logging(" ------ Transaction sent. You should receive "
             + trade.metadata.query.fromAmount*trade.metadata.source.price
             + trade.metadata.query.to + " via " + trade.metadata.source.dex)
