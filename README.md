@@ -7,13 +7,14 @@ Based on [DEX.ag API](https://docs.dex.ag/api)
 
 ### Instructions
 * Install node.js
-* Install ethers.js: 
+* Install ethers.js:
 > npm install --save ethers
 * Configure the user settings
   * Ethereum Mnemonic Key
   * Tokens to exchange (From, To)
   * Amount
   * Dex to use (best is for best rate). see https://docs.dex.ag/api for list of DEX
+  * Time to wait for the transaction to be confirmed (default is average). see https://docs.ethgasstation.info/
   * Infura API key
   * Telegram settings (chat_id and token). see https://www.shellhacks.com/telegram-api-send-message-personal-notification-bot/ to find the settings
 * To setup DCA use crontab. Example of launching script everyday at midnight:

@@ -14,6 +14,8 @@ const toToken = "ETH"
 const fromAmount = 10
 const dex = "best"  //best, uniswap, bancor, oasis, radar-relay, kyber
 
+const gasPriceSpeed = "average" //fast, fastest, safeLow, average => https://docs.ethgasstation.info/
+
 const gasLimit = 500000;
 
 //Telegram notifications parameters
@@ -96,6 +98,15 @@ async function getDexAgTrade() {
   }
 }
 
+async function getGasPrice() {
+  try {
+    let gasPrice = await request('https://ethgasstation.info/json/ethgasAPI.json');
+    return Number(JSON.parse(gasPrice)[gasPriceSpeed])/10;
+  } catch (err) {
+    logging('Error reaching ethgasstation');
+  }
+}
+
 async function approveToken(token, spender, amount) {
   // First 4 bytes of the hash of "fee()" for the sighash selector
   let funcHash = ethers.utils.hexDataSlice(ethers.utils.id('approve(address,uint256)'), 0, 4);
@@ -117,9 +128,7 @@ async function approveToken(token, spender, amount) {
 
   let nonce = await infuraProvider.getTransactionCount(ethersWallet.address);
 
-  // You will want to get the real gas price from https://ethgasstation.info/json/ethgasAPI.json
-  // let gasPrice = 4000000000;
-  let gasPrice = await infuraProvider.getGasPrice();
+  let gasPrice = await getGasPrice();
 
   let transaction = {
       to: token,
@@ -137,9 +146,7 @@ async function approveToken(token, spender, amount) {
 
 async function sendTrade(trade) {
     let nonce = await infuraProvider.getTransactionCount(ethersWallet.address);
-    // You will want to get the real gas price from https://ethgasstation.info/json/ethgasAPI.json
-    // let gasPrice = 4000000000;
-    let gasPrice = await infuraProvider.getGasPrice();
+    let gasPrice = await getGasPrice();
     if (trade.metadata.gasPrice) {
         // Use the contract gas price if specified (Bancor)
         gasPrice = trade.metadata.gasPrice
