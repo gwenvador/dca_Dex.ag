@@ -101,7 +101,7 @@ async function getDexAgTrade() {
 async function getGasPrice() {
   try {
     let gasPrice = await request('https://ethgasstation.info/json/ethgasAPI.json');
-    return Number(JSON.parse(gasPrice)[gasPriceSpeed])/10;
+    return Number(JSON.parse(gasPrice)[gasPriceSpeed])*10**8;
   } catch (err) {
     logging('Error reaching ethgasstation');
   }
@@ -154,7 +154,7 @@ async function sendTrade(trade) {
 
     let transaction = trade.trade;
     transaction.nonce = nonce;
-    transaction.gasPrice = Number(gasPrice);
+    transaction.gasPrice = gasPrice;
     transaction.gasLimit = gasLimit; // You will want to use estimateGas instead for real apps
     transaction.value = Number(transaction.value);
     // transaction.gasLimit = await infuraProvider.estimateGas(transaction);
