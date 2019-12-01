@@ -45,6 +45,20 @@ const ERC20_abi = [
   },
   {
     "constant": true,
+    "inputs": [],
+    "name": "decimals",
+    "outputs": [
+      {
+          "name": "",
+          "type": "uint8"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
     "inputs": [
         {
             "name": "_owner",
@@ -87,6 +101,12 @@ async function getAllowance(tokenAddress,spenderAddress) {
   let contract = new Contract(tokenAddress, ERC20_abi, infuraProvider);
   balance = await contract.allowance(ethersWallet.address, spenderAddress);
   return balance.toString();
+}
+
+async function getDecimals(tokenAddress) {
+  let contract = new Contract(tokenAddress, ERC20_abi, infuraProvider);
+  decimals = await contract.decimals();
+  return decimals.toString();
 }
 
 async function getDexAgTrade() {
@@ -182,6 +202,8 @@ async function start() {
     logging("Dex.ag request " + JSON.stringify(trade.metadata))
     // Check if enough tokens for the trade and return from dex.ag correct
     let balance = await getBalance(trade.metadata.input.address)
+    let decimals = await getDecimals(trade.metadata.input.address)
+
     //If balance is enough
     if (parseInt(balance) >= parseInt(trade.metadata.input.amount)) {
       let allowance = await getAllowance(trade.metadata.input.address, trade.metadata.input.spender)
@@ -195,7 +217,7 @@ async function start() {
       }
     }
     else {
-      logging('Token balance too small:' + balance)
+      logging('Token ' + fromToken + ' balance too small:' + parseInt(balance)/10**parseInt(decimals) + ' should be higher than '+ fromAmount)
     }
   }
 }
